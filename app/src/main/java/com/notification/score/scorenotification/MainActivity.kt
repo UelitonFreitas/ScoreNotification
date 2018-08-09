@@ -14,6 +14,7 @@ import org.opencv.core.Mat
 class MainActivity() : AppCompatActivity() {
 
     private val camera = object :  CameraBridgeViewBase.CvCameraViewListener2  {
+
         override fun onCameraFrame(inputFrame: CameraBridgeViewBase.CvCameraViewFrame?): Mat {
             Log.d("@@@", "frame")
             return inputFrame?.rgba()!!
@@ -64,6 +65,7 @@ class MainActivity() : AppCompatActivity() {
             when (status) {
                 LoaderCallbackInterface.SUCCESS -> {
                     Log.i("opencv", "opencv success")
+                    mOpenCvCameraView?.enableView()
                 }
                 else -> {
                     super.onManagerConnected(status)
