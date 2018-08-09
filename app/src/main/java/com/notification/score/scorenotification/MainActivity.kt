@@ -1,6 +1,10 @@
 package com.notification.score.scorenotification
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.SurfaceView
@@ -49,11 +53,33 @@ class MainActivity() : AppCompatActivity() {
         mOpenCvCameraView?.disableView()
     }
 
+    private val cameraRequestCode = 100
+
     override fun onResume() {
         super.onResume()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA), cameraRequestCode)
+        }
+        else{
+            initOpenCv()
+        }
+    }
+
+    private fun initOpenCv() {
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback)
     }
 
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        if (requestCode == cameraRequestCode) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                initOpenCv()
+            }
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
