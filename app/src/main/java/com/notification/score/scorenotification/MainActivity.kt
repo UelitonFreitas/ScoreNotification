@@ -4,15 +4,14 @@ import android.net.Uri
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Handler
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import com.google.android.exoplayer2.ExoPlayerFactory
-import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.source.ExtractorMediaSource
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
-import com.google.android.exoplayer2.trackselection.TrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
@@ -22,6 +21,9 @@ import org.opencv.android.CameraBridgeViewBase
 import org.opencv.android.LoaderCallbackInterface
 import org.opencv.android.OpenCVLoader
 import org.opencv.core.Mat
+import android.view.TextureView
+import android.view.View
+import android.widget.ImageView
 
 
 class MainActivity() : AppCompatActivity() {
@@ -40,6 +42,10 @@ class MainActivity() : AppCompatActivity() {
     }
 
     lateinit private var playerView : PlayerView
+    lateinit private var imageView : ImageView
+
+    private var handler = Handler()
+    private val runnable = Runnable { getImagePeriodically() }
 
     private var mOpenCvCameraView : CameraBridgeViewBase? = null
 
@@ -48,11 +54,14 @@ class MainActivity() : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         playerView = findViewById(R.id.player_view)
+        imageView = findViewById(R.id.imageView)
 
         val player = ExoPlayerFactory.newSimpleInstance(this, DefaultTrackSelector())
         playerView.player = player
         val mediaSource = ExtractorMediaSource.Factory(DefaultDataSourceFactory(this, Util.getUserAgent(this, "ScoreNotification"))).createMediaSource(Uri.parse("asset:///highline.mp4"));
         player.prepare(mediaSource)
+
+        getImagePeriodically()
 
         mOpenCvCameraView = findViewById(R.id.live_camera_frame)
         mOpenCvCameraView?.visibility = SurfaceView.VISIBLE
@@ -98,6 +107,7 @@ class MainActivity() : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         mOpenCvCameraView?.disableView()
+        handler.removeCallbacks(runnable)
     }
 
     private val mLoaderCallback = object : BaseLoaderCallback(this) {
@@ -112,6 +122,21 @@ class MainActivity() : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    fun getImagePeriodically() {
+        getImage()
+        handler.postDelayed(runnable, 1000)
+    }
+
+    fun buttonClick(v: View) {
+        getImage()
+    }
+
+    fun getImage() {
+        val textureView = playerView.getVideoSurfaceView() as TextureView
+        val bitmap = textureView.getBitmap()
+        imageView.setImageBitmap(bitmap)
     }
 
     /**
