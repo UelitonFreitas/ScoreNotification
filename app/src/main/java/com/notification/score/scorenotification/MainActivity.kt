@@ -58,7 +58,7 @@ class MainActivity() : AppCompatActivity() {
 
         val player = ExoPlayerFactory.newSimpleInstance(this, DefaultTrackSelector())
         playerView.player = player
-        val mediaSource = ExtractorMediaSource.Factory(DefaultDataSourceFactory(this, Util.getUserAgent(this, "ScoreNotification"))).createMediaSource(Uri.parse("asset:///highline.mp4"));
+        val mediaSource = ExtractorMediaSource.Factory(DefaultDataSourceFactory(this, Util.getUserAgent(this, "ScoreNotification"))).createMediaSource(Uri.parse("asset:///Brasil_Mexico_480.mp4"));
         player.prepare(mediaSource)
 
         getImagePeriodically()
