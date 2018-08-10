@@ -3,6 +3,7 @@ package com.notification.score.scorenotification
 import android.net.Uri
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
 import android.support.v4.app.ActivityCompat
@@ -136,7 +137,11 @@ class MainActivity() : AppCompatActivity() {
     fun getImage() {
         val textureView = playerView.getVideoSurfaceView() as TextureView
         val bitmap = textureView.getBitmap()
-        imageView.setImageBitmap(bitmap)
+        bitmap?.let {
+            Log.d("@@@", "Bitmap: ${bitmap?.height}/${bitmap?.width}")
+            val placar = Bitmap.createBitmap(it, 0, it.height/20, it.width/2, it.height/10)
+            imageView.setImageBitmap(placar)
+        }
     }
 
     /**
