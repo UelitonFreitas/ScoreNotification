@@ -20,6 +20,8 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.notification.score.scorenotification.imageprovider.ImageProvider
+import com.notification.score.scorenotification.imageprovider.ImageProviderImpl
 import org.jetbrains.anko.doAsync
 import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.LoaderCallbackInterface
@@ -36,9 +38,8 @@ class MainActivity() : AppCompatActivity() {
     lateinit private var imageView: ImageView
     val scores by lazy { findViewById<TextView>(R.id.text_view_score) }
     lateinit var ocr: TessOCR
+    lateinit var imageProvider: ImageProvider
 
-    private var handler = Handler()
-    private val runnable = Runnable { getImagePeriodically() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +48,7 @@ class MainActivity() : AppCompatActivity() {
         playerView = findViewById(R.id.player_view)
         imageView = findViewById(R.id.imageView)
         ocr = TessOCR(this) {
-            runOnUiThread{
+            runOnUiThread {
                 scores.text = it
             }
         }
@@ -56,9 +57,6 @@ class MainActivity() : AppCompatActivity() {
         playerView.player = player
         val mediaSource = ExtractorMediaSource.Factory(DefaultDataSourceFactory(this, Util.getUserAgent(this, "ScoreNotification"))).createMediaSource(Uri.parse("asset:///Brasil_Mexico_2oT_720.mp4"));
         player.prepare(mediaSource)
-
-        getImagePeriodically()
-
     }
 
     private val cameraRequestCode = 100
@@ -70,6 +68,38 @@ class MainActivity() : AppCompatActivity() {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE), cameraRequestCode)
         } else {
             initOpenCv()
+        }
+
+        imageProvider = ImageProviderImpl(playerView, ::findScore).apply { startToGetImagePeriodically() }
+    }
+
+    private fun findScore(bitmap: Bitmap) {
+        doAsync {
+            var text: String? = null
+            var placar: Bitmap? = null
+
+            bitmap?.let {
+                Log.d("@@@", "Bitmap: ${bitmap?.height}/${bitmap?.width}")
+                placar = Bitmap.createBitmap(it, 10, it.height / 20, it.width / 4, it.height / 10)
+
+                val img_mat = Mat()
+                Utils.bitmapToMat(placar, img_mat)
+
+                val img_gray = Mat()
+
+                Imgproc.cvtColor(img_mat, img_gray, Imgproc.COLOR_BGR2GRAY)
+
+                val img_blurred = Mat()
+
+                Imgproc.GaussianBlur(img_gray, img_blurred, Size(3.0, 3.0), 2.0)
+
+                Utils.matToBitmap(img_gray, placar)
+                ocr.processOcr(placar!!)
+            }
+
+            runOnUiThread {
+                imageView.setImageBitmap(placar)
+            }
         }
     }
 
@@ -89,8 +119,9 @@ class MainActivity() : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        imageProvider.stopToGetImagesPeriodically()
         super.onDestroy()
-        handler.removeCallbacks(runnable)
+
     }
 
     private val mLoaderCallback = object : BaseLoaderCallback(this) {
@@ -109,47 +140,9 @@ class MainActivity() : AppCompatActivity() {
         }
     }
 
-    fun getImagePeriodically() {
-        getImage()
-        handler.postDelayed(runnable, 1000)
-    }
 
     fun buttonClick(v: View) {
-        getImage()
-    }
-
-    fun getImage() {
-        val textureView = playerView.getVideoSurfaceView() as TextureView
-        val bitmap = textureView.bitmap
-
-        doAsync {
-            var text: String? = null
-            var placar : Bitmap? = null
-
-            bitmap?.let {
-                Log.d("@@@", "Bitmap: ${bitmap?.height}/${bitmap?.width}")
-                placar = Bitmap.createBitmap(it, 10, it.height / 20, it.width / 4, it.height / 10)
-
-                val img_mat = Mat()
-                Utils.bitmapToMat(placar, img_mat)
-
-                val img_gray = Mat()
-
-                Imgproc.cvtColor(img_mat, img_gray, Imgproc.COLOR_BGR2GRAY)
-
-                val img_blurred = Mat()
-
-                Imgproc.GaussianBlur(img_gray, img_blurred,  Size(3.0,3.0), 2.0)
-
-                Utils.matToBitmap(img_gray, placar)
-                ocr.processOcr(placar!!)
-            }
-
-            runOnUiThread {
-                imageView.setImageBitmap(placar)
-            }
-        }
-//        imageView.setImageBitmap(bitmap)
+        imageProvider.getImage()
     }
 
     /**
