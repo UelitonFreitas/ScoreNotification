@@ -20,6 +20,8 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.notification.score.scorenotification.classifiers.ScoreClassifier
+import com.notification.score.scorenotification.classifiers.ScoreClassifierImpl
 import com.notification.score.scorenotification.imageprovider.ImageProvider
 import com.notification.score.scorenotification.imageprovider.ImageProviderImpl
 import org.jetbrains.anko.doAsync
@@ -36,9 +38,9 @@ class MainActivity() : AppCompatActivity() {
 
     lateinit private var playerView: PlayerView
     lateinit private var imageView: ImageView
-    val scores by lazy { findViewById<TextView>(R.id.text_view_score) }
-    lateinit var ocr: TessOCR
+    private val scores: TextView by lazy { findViewById<TextView>(R.id.text_view_score) }
     lateinit var imageProvider: ImageProvider
+    lateinit var scoreClassifier: ScoreClassifier
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,11 +49,6 @@ class MainActivity() : AppCompatActivity() {
 
         playerView = findViewById(R.id.player_view)
         imageView = findViewById(R.id.imageView)
-        ocr = TessOCR(this) {
-            runOnUiThread {
-                scores.text = it
-            }
-        }
 
         val player = ExoPlayerFactory.newSimpleInstance(this, DefaultTrackSelector())
         playerView.player = player
@@ -75,31 +72,8 @@ class MainActivity() : AppCompatActivity() {
 
     private fun findScore(bitmap: Bitmap) {
         doAsync {
-            var text: String? = null
-            var placar: Bitmap? = null
-
-            bitmap?.let {
-                Log.d("@@@", "Bitmap: ${bitmap?.height}/${bitmap?.width}")
-                placar = Bitmap.createBitmap(it, 10, it.height / 20, it.width / 4, it.height / 10)
-
-                val img_mat = Mat()
-                Utils.bitmapToMat(placar, img_mat)
-
-                val img_gray = Mat()
-
-                Imgproc.cvtColor(img_mat, img_gray, Imgproc.COLOR_BGR2GRAY)
-
-                val img_blurred = Mat()
-
-                Imgproc.GaussianBlur(img_gray, img_blurred, Size(3.0, 3.0), 2.0)
-
-                Utils.matToBitmap(img_gray, placar)
-                ocr.processOcr(placar!!)
-            }
-
-            runOnUiThread {
-                imageView.setImageBitmap(placar)
-            }
+            scoreClassifier.getScore(bitmap)
+            runOnUiThread { imageView.setImageBitmap(bitmap) }
         }
     }
 
@@ -129,9 +103,7 @@ class MainActivity() : AppCompatActivity() {
             when (status) {
                 LoaderCallbackInterface.SUCCESS -> {
                     Log.i("opencv", "opencv success")
-                    doAsync {
-                        ocr.initalizeTess()
-                    }
+                    scoreClassifier = ScoreClassifierImpl(mAppContext) { runOnUiThread { scores.text = it  } }.apply { start() }
                 }
                 else -> {
                     super.onManagerConnected(status)
