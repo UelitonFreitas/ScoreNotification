@@ -2,6 +2,7 @@ package com.notification.score.scorenotification
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
@@ -29,14 +30,22 @@ import org.opencv.android.OpenCVLoader
 
 class MainActivity() : AppCompatActivity() {
 
-    lateinit private var playerView: PlayerView
-    lateinit private var imageView: ImageView
+    companion object {
+        // Used to load the 'native-lib' library on application startup.
+        init {
+            System.loadLibrary("native-lib")
+        }
+    }
+
+    private lateinit var playerView: PlayerView
+    private lateinit var imageView: ImageView
     private val scores: TextView by lazy { findViewById<TextView>(R.id.text_view_score) }
     lateinit var imageProvider: ImageProvider
     lateinit var scoreClassifier: ScoreClassifier
 
     lateinit var scoreRecognizer: ScoreRecognizer
 
+    private val cameraRequestCode = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,7 +60,6 @@ class MainActivity() : AppCompatActivity() {
         player.prepare(mediaSource)
     }
 
-    private val cameraRequestCode = 100
 
     override fun onResume() {
         super.onResume()
@@ -65,16 +73,14 @@ class MainActivity() : AppCompatActivity() {
         imageProvider = ImageProviderImpl(playerView)
         scoreClassifier = ScoreClassifierImpl(this).apply { start() }
         scoreRecognizer = ScoreRecognizer(imageProvider, scoreClassifier, ::onScoreFound).apply {
+            onImageProcessed = ::onImageProcessed
             startWatchScoreChange()
         }
     }
 
-//    private fun findScore(bitmap: Bitmap) {
-//        doAsync {
-//            scoreClassifier.getScore(bitmap)
-//            runOnUiThread { imageView.setImageBitmap(bitmap) }
-//        }
-//    }
+    private fun onImageProcessed(bitmap: Bitmap) {
+        runOnUiThread { imageView.setImageBitmap(bitmap) }
+    }
 
     private fun initOpenCv() {
         OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_4_0, this, mLoaderCallback)
@@ -118,22 +124,6 @@ class MainActivity() : AppCompatActivity() {
     fun buttonClick(v: View) {
         scoreRecognizer.findScore()
     }
-
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
-
-    companion object {
-
-        // Used to load the 'native-lib' library on application startup.
-        init {
-            System.loadLibrary("native-lib")
-        }
-    }
-
-
 }
 
 

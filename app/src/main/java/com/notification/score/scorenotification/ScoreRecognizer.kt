@@ -6,12 +6,15 @@ import com.notification.score.scorenotification.classifiers.ScoreClassifier
 import com.notification.score.scorenotification.imageprocessor.ImageProcessor
 import com.notification.score.scorenotification.imageprovider.ImageProvider
 
-class ScoreRecognizer(private val imageProvider: ImageProvider, private val classifier: ScoreClassifier, val onScoreChange: (String) -> Unit ) {
+class ScoreRecognizer(private val imageProvider: ImageProvider,
+                      private val classifier: ScoreClassifier,
+                      private val onScoreChange: (String) -> Unit) {
 
     private var handler = Handler()
     private val runnable = Runnable { startWatchScoreChange() }
 
     var imageProcessor: ImageProcessor? = null
+    var onImageProcessed: ((bitmap: Bitmap) -> Unit)? = null
 
     fun startWatchScoreChange() {
         findScore()
@@ -27,6 +30,7 @@ class ScoreRecognizer(private val imageProvider: ImageProvider, private val clas
     }
 
     private fun onImageProcessed(bitmap: Bitmap) {
+        onImageProcessed?.invoke(bitmap)
         classifier.getScore(bitmap, onScoreChange)
     }
 
