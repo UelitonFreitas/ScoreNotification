@@ -4,13 +4,16 @@ import android.content.Context
 import android.graphics.Bitmap
 import com.notification.score.scorenotification.TessOCR
 
-class ScoreClassifierImpl(context: Context, val onScoreFound: (String) -> Unit) : ScoreClassifier {
+class ScoreClassifierImpl(context: Context, var onScoreFound: ((String) -> Unit)? = null) : ScoreClassifier {
 
-    var ocr: TessOCR = TessOCR(context) { onScoreFound(it) }
+    var ocr: TessOCR = TessOCR(context) { onScoreFound?.invoke(it) }
 
-    override fun getScore(image: Bitmap) {
-            ocr.processOcr(image)
+    override fun getScore(image: Bitmap, newOnScoreFound: (String)->Unit) {
+        onScoreFound = newOnScoreFound
+        ocr.processOcr(image)
     }
 
-    fun start(){ ocr.initalizeTess() }
+    fun start(){
+        ocr.initalizeTess()
+    }
 }
