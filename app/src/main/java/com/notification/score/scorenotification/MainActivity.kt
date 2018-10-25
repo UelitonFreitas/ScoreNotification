@@ -5,12 +5,10 @@ import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.view.TextureView
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -20,26 +18,34 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.notification.score.scorenotification.classifiers.ScoreClassifier
+import com.notification.score.scorenotification.classifiers.ScoreClassifierImpl
+import com.notification.score.scorenotification.imageprocessor.OpenCvImageProcessor
 import com.notification.score.scorenotification.imageprovider.ImageProvider
 import com.notification.score.scorenotification.imageprovider.ImageProviderImpl
-import org.jetbrains.anko.doAsync
 import org.opencv.android.BaseLoaderCallback
 import org.opencv.android.LoaderCallbackInterface
 import org.opencv.android.OpenCVLoader
-import org.opencv.android.Utils
-import org.opencv.core.Mat
-import org.opencv.core.Size
-import org.opencv.imgproc.Imgproc
 
 
 class MainActivity() : AppCompatActivity() {
 
-    lateinit private var playerView: PlayerView
-    lateinit private var imageView: ImageView
-    val scores by lazy { findViewById<TextView>(R.id.text_view_score) }
-    lateinit var ocr: TessOCR
-    lateinit var imageProvider: ImageProvider
+    companion object {
+        // Used to load the 'native-lib' library on application startup.
+        init {
+            System.loadLibrary("native-lib")
+        }
+    }
 
+    private lateinit var playerView: PlayerView
+    private lateinit var imageView: ImageView
+    private val scores: TextView by lazy { findViewById<TextView>(R.id.text_view_score) }
+    lateinit var imageProvider: ImageProvider
+    lateinit var scoreClassifier: ScoreClassifier
+
+    lateinit var scoreRecognizer: ScoreRecognizer
+
+    private val cameraRequestCode = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,11 +53,6 @@ class MainActivity() : AppCompatActivity() {
 
         playerView = findViewById(R.id.player_view)
         imageView = findViewById(R.id.imageView)
-        ocr = TessOCR(this) {
-            runOnUiThread {
-                scores.text = it
-            }
-        }
 
         val player = ExoPlayerFactory.newSimpleInstance(this, DefaultTrackSelector())
         playerView.player = player
@@ -59,7 +60,6 @@ class MainActivity() : AppCompatActivity() {
         player.prepare(mediaSource)
     }
 
-    private val cameraRequestCode = 100
 
     override fun onResume() {
         super.onResume()
@@ -70,37 +70,16 @@ class MainActivity() : AppCompatActivity() {
             initOpenCv()
         }
 
-        imageProvider = ImageProviderImpl(playerView, ::findScore).apply { startToGetImagePeriodically() }
+        imageProvider = ImageProviderImpl(playerView)
+        scoreClassifier = ScoreClassifierImpl(this).apply { start() }
+        scoreRecognizer = ScoreRecognizer(imageProvider, scoreClassifier, ::onScoreFound).apply {
+            onImageProcessed = ::onImageProcessed
+            startWatchScoreChange()
+        }
     }
 
-    private fun findScore(bitmap: Bitmap) {
-        doAsync {
-            var text: String? = null
-            var placar: Bitmap? = null
-
-            bitmap?.let {
-                Log.d("@@@", "Bitmap: ${bitmap?.height}/${bitmap?.width}")
-                placar = Bitmap.createBitmap(it, 10, it.height / 20, it.width / 4, it.height / 10)
-
-                val img_mat = Mat()
-                Utils.bitmapToMat(placar, img_mat)
-
-                val img_gray = Mat()
-
-                Imgproc.cvtColor(img_mat, img_gray, Imgproc.COLOR_BGR2GRAY)
-
-                val img_blurred = Mat()
-
-                Imgproc.GaussianBlur(img_gray, img_blurred, Size(3.0, 3.0), 2.0)
-
-                Utils.matToBitmap(img_gray, placar)
-                ocr.processOcr(placar!!)
-            }
-
-            runOnUiThread {
-                imageView.setImageBitmap(placar)
-            }
-        }
+    private fun onImageProcessed(bitmap: Bitmap) {
+        runOnUiThread { imageView.setImageBitmap(bitmap) }
     }
 
     private fun initOpenCv() {
@@ -119,7 +98,7 @@ class MainActivity() : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        imageProvider.stopToGetImagesPeriodically()
+        scoreRecognizer.stopWatchScoreChange()
         super.onDestroy()
 
     }
@@ -129,9 +108,7 @@ class MainActivity() : AppCompatActivity() {
             when (status) {
                 LoaderCallbackInterface.SUCCESS -> {
                     Log.i("opencv", "opencv success")
-                    doAsync {
-                        ocr.initalizeTess()
-                    }
+                    scoreRecognizer.imageProcessor = OpenCvImageProcessor()
                 }
                 else -> {
                     super.onManagerConnected(status)
@@ -140,26 +117,13 @@ class MainActivity() : AppCompatActivity() {
         }
     }
 
+    private fun onScoreFound(score: String) {
+        runOnUiThread { scores.text = score }
+    }
 
     fun buttonClick(v: View) {
-        imageProvider.getImage()
+        scoreRecognizer.findScore()
     }
-
-    /**
-     * A native method that is implemented by the 'native-lib' native library,
-     * which is packaged with this application.
-     */
-    external fun stringFromJNI(): String
-
-    companion object {
-
-        // Used to load the 'native-lib' library on application startup.
-        init {
-            System.loadLibrary("native-lib")
-        }
-    }
-
-
 }
 
 

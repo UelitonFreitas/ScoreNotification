@@ -1,7 +1,7 @@
 package com.notification.score.scorenotification.imageprovider
 
+import android.graphics.Bitmap
+
 interface ImageProvider {
-    fun getImage()
-    fun startToGetImagePeriodically()
-    fun stopToGetImagesPeriodically()
+    fun getImage(onImageCaptured: (Bitmap) -> Unit)
 }
