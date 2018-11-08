@@ -32,7 +32,7 @@ android {
     }
 }
 
-ext.anko_version='0.10.5'
+ext.anko_version='0.10.7'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
