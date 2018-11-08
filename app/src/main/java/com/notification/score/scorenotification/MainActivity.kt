@@ -18,6 +18,7 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
+import com.notification.score.scorenotification.classifiers.FirebaseVisionDocumentTextRecognizer
 import com.notification.score.scorenotification.classifiers.ScoreClassifier
 import com.notification.score.scorenotification.classifiers.ScoreClassifierImpl
 import com.notification.score.scorenotification.imageprocessor.OpenCvImageProcessor
@@ -53,6 +54,8 @@ class MainActivity() : AppCompatActivity() {
 
         playerView = findViewById(R.id.player_view)
         imageView = findViewById(R.id.imageView)
+
+        scoreClassifier = FirebaseVisionDocumentTextRecognizer(this.applicationContext).apply { start() }
 
         val player = ExoPlayerFactory.newSimpleInstance(this, DefaultTrackSelector())
         playerView.player = player
