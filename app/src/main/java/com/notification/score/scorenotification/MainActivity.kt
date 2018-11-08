@@ -17,9 +17,7 @@ import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
-import com.notification.score.scorenotification.classifiers.FirebaseVisionDocumentTextRecognizer
 import com.notification.score.scorenotification.classifiers.ScoreClassifier
-import com.notification.score.scorenotification.classifiers.ScoreClassifierImpl
 import com.notification.score.scorenotification.imageprovider.ImageProvider
 import com.notification.score.scorenotification.imageprovider.ImageProviderImpl
 
@@ -50,7 +48,10 @@ class MainActivity() : AppCompatActivity() {
         playerView = findViewById(R.id.player_view)
         imageView = findViewById(R.id.imageView)
 
-        scoreClassifier = FirebaseVisionDocumentTextRecognizer(this.applicationContext).apply { start() }
+        scoreClassifier = object : ScoreClassifier {
+            override fun getScore(image: Bitmap, onScoreFound: (String) -> Unit) {
+            }
+        }
 
         val player = ExoPlayerFactory.newSimpleInstance(this, DefaultTrackSelector())
         playerView.player = player
@@ -64,10 +65,10 @@ class MainActivity() : AppCompatActivity() {
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE), cameraRequestCode)
-        } else { }
+        } else {
+        }
 
         imageProvider = ImageProviderImpl(playerView)
-        scoreClassifier = ScoreClassifierImpl(this).apply { start() }
         scoreRecognizer = ScoreRecognizer(imageProvider, scoreClassifier, ::onScoreFound).apply {
             onImageProcessed = ::onImageProcessed
             startWatchScoreChange()
