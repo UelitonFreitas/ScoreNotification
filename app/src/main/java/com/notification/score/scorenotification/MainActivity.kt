@@ -25,15 +25,7 @@ import com.notification.score.scorenotification.imageprovider.ImageProviderImpl
 
 
 class MainActivity() : AppCompatActivity() {
-
-    companion object {
-        // Used to load the 'native-lib' library on application startup.
-        init {
-            System.loadLibrary("native-lib")
-        }
-    }
-
-    private lateinit var playerView: PlayerView
+    private lateinit var globoPlayer : Player
     private lateinit var imageView: ImageView
     private val scores: TextView by lazy { findViewById<TextView>(R.id.text_view_score) }
     lateinit var imageProvider: ImageProvider
