@@ -9,13 +9,11 @@ import android.util.Log
 import android.widget.Toast
 import com.google.android.gms.vision.Frame
 import com.google.android.gms.vision.text.TextRecognizer
-import com.googlecode.tesseract.android.TessBaseAPI
 
 
 class TessOCR(val context: Context, val language: String = "eng", val f: (String)->Unit) {
 
     companion object {
-        val tesseract = TessBaseAPI()
         const val tag = "TessOCR"
     }
 
