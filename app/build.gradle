@@ -60,5 +60,5 @@ dependencies {
 
     implementation 'com.google.android.gms:play-services-vision:17.0.2'
 
-    implementation 'com.google.firebase:firebase-ml-vision:17.0.1'
+    implementation 'com.google.firebase:firebase-ml-vision:18.0.1'
 }
