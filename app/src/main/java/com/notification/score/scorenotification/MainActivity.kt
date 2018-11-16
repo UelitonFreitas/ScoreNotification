@@ -1,12 +1,7 @@
 package com.notification.score.scorenotification
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Bundle
-import android.support.v4.app.ActivityCompat
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.TextureView
@@ -17,12 +12,7 @@ import android.widget.TextView
 import com.globo.video.player.Player
 import com.globo.video.player.PlayerOption
 import com.globo.video.player.base.PlayerMimeType
-import com.google.android.exoplayer2.ExoPlayerFactory
-import com.google.android.exoplayer2.source.ExtractorMediaSource
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import com.notification.score.scorenotification.classifiers.FirebaseVisionDocumentTextRecognizer
 import com.notification.score.scorenotification.classifiers.ScoreClassifier
 import com.notification.score.scorenotification.classifiers.ScoreClassifierImpl
@@ -41,8 +31,6 @@ class MainActivity() : AppCompatActivity() {
     lateinit var scoreClassifier: ScoreClassifier
 
     lateinit var scoreRecognizer: ScoreRecognizer
-
-    private val cameraRequestCode = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         io.clappr.player.Player.initialize(applicationContext)
@@ -70,10 +58,6 @@ class MainActivity() : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE), cameraRequestCode)
-        } else { }
 
         imageProvider = ImageProviderImpl(globoPlayer)
         scoreClassifier = ScoreClassifierImpl(this).apply { start() }
