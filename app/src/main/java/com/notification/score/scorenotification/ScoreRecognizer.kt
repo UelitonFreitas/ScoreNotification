@@ -1,24 +1,27 @@
 package com.notification.score.scorenotification
 
 import android.graphics.Bitmap
-import android.os.Handler
 import com.notification.score.scorenotification.classifiers.ScoreClassifier
 import com.notification.score.scorenotification.imageprocessor.ImageProcessor
+import com.notification.score.scorenotification.imageprocessor.ImageProcessorImpl
 import com.notification.score.scorenotification.imageprovider.ImageProvider
+import kotlinx.coroutines.*
 
 class ScoreRecognizer(private val imageProvider: ImageProvider,
                       private val classifier: ScoreClassifier,
                       private val onScoreChange: (String) -> Unit) {
 
-    private var handler = Handler()
-    private val runnable = Runnable { startWatchScoreChange() }
-
-    var imageProcessor: ImageProcessor? = null
+    var imageProcessor: ImageProcessor? = ImageProcessorImpl()
     var onImageProcessed: ((bitmap: Bitmap) -> Unit)? = null
+    var job: Job? = null
 
     fun startWatchScoreChange() {
-        findScore()
-        handler.postDelayed(runnable, 500)
+        job = GlobalScope.launch {
+            while(isActive) {
+                findScore()
+                delay(500L)
+            }
+        }
     }
 
     fun findScore() {
@@ -35,6 +38,8 @@ class ScoreRecognizer(private val imageProvider: ImageProvider,
     }
 
     fun stopWatchScoreChange() {
-        handler.removeCallbacks(runnable)
+        GlobalScope.launch {
+            job?.cancelAndJoin()
+        }
     }
 }
