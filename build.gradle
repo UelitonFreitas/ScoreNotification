@@ -24,8 +24,8 @@ allprojects {
         maven {
             url 'https://artifactory.video.globo.com/artifactory/libs-snapshot'
             credentials {
-                username player_artifactory_user
-                password player_artifactory_key
+                username System.getenv('ARTIFACTORY_USER')
+                password System.getenv('ARTIFACTORY_PASSWORD')
             }
         }
     }
