@@ -11,30 +11,25 @@ class ScoreRecognizer(private val imageProvider: ImageProvider,
                       private val classifier: ScoreClassifier,
                       private val onScoreChange: (String) -> Unit) {
 
-    var imageProcessor: ImageProcessor? = ImageProcessorImpl()
+    var imageProcessor = ImageProcessorImpl()
     var onImageProcessed: ((bitmap: Bitmap) -> Unit)? = null
     var job: Job? = null
 
     fun startWatchScoreChange() {
         job = GlobalScope.launch {
             while(isActive) {
-                findScore()
+                imageProvider.getImage()?.let { findScore(it) }
                 delay(500L)
             }
         }
     }
 
-    fun findScore() {
-         imageProvider.getImage(::onImageCaptured)
-    }
+    private fun findScore(image: Bitmap) {
+        val processedImage = imageProcessor.processImage(image)
+        onImageProcessed?.invoke(processedImage)
 
-    private fun onImageCaptured(bitmap: Bitmap) {
-        imageProcessor?.processImage(bitmap, ::onImageProcessed) ?: classifier.getScore(bitmap, onScoreChange)
-    }
-
-    private fun onImageProcessed(bitmap: Bitmap) {
-        onImageProcessed?.invoke(bitmap)
-        classifier.getScore(bitmap, onScoreChange)
+        val score = classifier.getScore(processedImage)
+        onScoreChange(score)
     }
 
     fun stopWatchScoreChange() {
