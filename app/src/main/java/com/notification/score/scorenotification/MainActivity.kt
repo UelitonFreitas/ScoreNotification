@@ -3,17 +3,12 @@ package com.notification.score.scorenotification
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
-import android.view.TextureView
-import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.globo.video.player.Player
 import com.globo.video.player.PlayerOption
 import com.globo.video.player.base.PlayerMimeType
-import com.google.android.exoplayer2.ui.PlayerView
-import com.notification.score.scorenotification.classifiers.FirebaseVisionDocumentTextRecognizer
 import com.notification.score.scorenotification.classifiers.ScoreClassifier
 import com.notification.score.scorenotification.classifiers.ScoreClassifierImpl
 import com.notification.score.scorenotification.imageprovider.ImageProvider
@@ -41,8 +36,6 @@ class MainActivity() : AppCompatActivity() {
         imageView = findViewById(R.id.imageView)
         playerContainer = findViewById(R.id.player_container)
 
-        scoreClassifier = FirebaseVisionDocumentTextRecognizer(this.applicationContext).apply { start() }
-
         globoPlayer = Player()
 
         val options = hashMapOf<String, Any>(
@@ -60,7 +53,7 @@ class MainActivity() : AppCompatActivity() {
         super.onResume()
 
         imageProvider = ImageProviderImpl(globoPlayer)
-        scoreClassifier = ScoreClassifierImpl(this).apply { start() }
+        scoreClassifier = ScoreClassifierImpl()
         scoreRecognizer = ScoreRecognizer(imageProvider, scoreClassifier, ::onScoreFound).apply {
             onImageProcessed = ::onImageProcessed
             startWatchScoreChange()
@@ -80,13 +73,6 @@ class MainActivity() : AppCompatActivity() {
 
     private fun onScoreFound(score: String) {
         runOnUiThread { scores.text = score }
-    }
-
-    fun buttonClick(v: View) {
-        scoreRecognizer.findScore()
-        val playerBitmap = globoPlayer.getVideoFrame()
-        val videoBitmap = ((globoPlayer.core?.activePlayback?.view as? PlayerView)?.videoSurfaceView as? TextureView)?.bitmap
-        Log.d("Scorenotification", "onImageProcessed: (${playerBitmap?.width}/${playerBitmap?.height}) / (${videoBitmap?.width}/${videoBitmap?.height})")
     }
 }
 
