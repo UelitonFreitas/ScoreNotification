@@ -74,13 +74,6 @@ class MainActivity() : AppCompatActivity() {
     private fun onScoreFound(score: String) {
         runOnUiThread { scores.text = score }
     }
-
-    fun buttonClick(v: View) {
-        scoreRecognizer.findScore()
-        val playerBitmap = globoPlayer.getVideoFrame()
-        val videoBitmap = ((globoPlayer.core?.activePlayback?.view as? PlayerView)?.videoSurfaceView as? TextureView)?.bitmap
-        Log.d("Scorenotification", "onImageProcessed: (${playerBitmap?.width}/${playerBitmap?.height}) / (${videoBitmap?.width}/${videoBitmap?.height})")
-    }
 }
 
 
