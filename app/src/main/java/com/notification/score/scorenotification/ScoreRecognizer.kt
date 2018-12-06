@@ -9,7 +9,8 @@ import kotlinx.coroutines.*
 
 class ScoreRecognizer(private val imageProvider: ImageProvider,
                       private val classifier: ScoreClassifier,
-                      private val onScoreChange: (String) -> Unit) {
+                      private val onScoreChange: (String) -> Unit,
+                      private val onDrawRequest:  (Bitmap) -> Unit) {
 
     var imageProcessor: ImageProcessor? = ImageProcessorImpl()
     var onImageProcessed: ((bitmap: Bitmap) -> Unit)? = null
@@ -19,7 +20,7 @@ class ScoreRecognizer(private val imageProvider: ImageProvider,
         job = GlobalScope.launch {
             while(isActive) {
                 findScore()
-                delay(500L)
+                delay(1000L)
             }
         }
     }
@@ -29,12 +30,12 @@ class ScoreRecognizer(private val imageProvider: ImageProvider,
     }
 
     private fun onImageCaptured(bitmap: Bitmap) {
-        imageProcessor?.processImage(bitmap, ::onImageProcessed) ?: classifier.getScore(bitmap, onScoreChange)
+        imageProcessor?.processImage(bitmap, ::onImageProcessed) ?: classifier.getScore(bitmap, onScoreChange, onDrawRequest)
     }
 
     private fun onImageProcessed(bitmap: Bitmap) {
         onImageProcessed?.invoke(bitmap)
-        classifier.getScore(bitmap, onScoreChange)
+        classifier.getScore(bitmap, onScoreChange, onDrawRequest)
     }
 
     fun stopWatchScoreChange() {

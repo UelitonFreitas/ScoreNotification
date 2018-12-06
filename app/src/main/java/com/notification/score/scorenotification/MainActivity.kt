@@ -3,6 +3,7 @@ package com.notification.score.scorenotification
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
@@ -54,8 +55,8 @@ class MainActivity() : AppCompatActivity() {
 
         imageProvider = ImageProviderImpl(globoPlayer)
         scoreClassifier = ScoreClassifierImpl()
-        scoreRecognizer = ScoreRecognizer(imageProvider, scoreClassifier, ::onScoreFound).apply {
-            onImageProcessed = ::onImageProcessed
+        scoreRecognizer = ScoreRecognizer(imageProvider, scoreClassifier, ::onScoreFound, ::onDrawRequest).apply {
+//            onImageProcessed = ::onImageProcessed
             startWatchScoreChange()
         }
     }
@@ -73,6 +74,11 @@ class MainActivity() : AppCompatActivity() {
 
     private fun onScoreFound(score: String) {
         runOnUiThread { scores.text = score }
+    }
+
+    private fun onDrawRequest(bitmap: Bitmap){
+        Log.d("@@@@@", "draw found position")
+        onImageProcessed(bitmap)
     }
 }
 
