@@ -24,7 +24,7 @@ class ScoreRecognizer(private val imageProvider: ImageProvider,
         }
     }
 
-    private fun findScore(image: Bitmap) {
+    private suspend fun findScore(image: Bitmap) {
         val processedImage = imageProcessor.processImage(image)
         onImageProcessed?.invoke(processedImage)
 

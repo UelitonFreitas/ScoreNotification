@@ -3,5 +3,5 @@ package com.notification.score.scorenotification.classifiers
 import android.graphics.Bitmap
 
 interface ScoreClassifier {
-    fun getScore(image: Bitmap) : String
+    suspend fun getScore(image: Bitmap) : String
 }
