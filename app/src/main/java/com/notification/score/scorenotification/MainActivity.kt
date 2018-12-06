@@ -87,7 +87,7 @@ class MainActivity() : AppCompatActivity() {
 
         imageProvider = ImageProviderImpl(globoPlayer)
         imageClassifier = FaceDetectImpl()
-        scoreRecognizer = ObjectRecognizer(imageProvider, imageClassifier, ::onFacesFound, ::onDrawRequest).apply {
+        scoreRecognizer = ObjectRecognizer(imageProvider, imageClassifier, ::onFacesFound, ::onObjectsFoundDrawed).apply {
             startWatchScoreChange()
         }
     }
@@ -104,10 +104,11 @@ class MainActivity() : AppCompatActivity() {
     }
 
     private fun onFacesFound(faces: List<FirebaseVisionFace>) {
+
         scores.text = "${faces.size} faces found!"
     }
 
-    private fun onDrawRequest(bitmap: Bitmap) {
+    private fun onObjectsFoundDrawed(bitmap: Bitmap) {
         onImageProcessed(bitmap)
     }
 

@@ -10,7 +10,7 @@ import kotlinx.coroutines.*
 class ObjectRecognizer<T>(private val imageProvider: ImageProvider,
                       private val classifier: ImageClassifier<T>,
                       private val onScoreChange: (T) -> Unit,
-                      private val onDrawRequest:  (Bitmap) -> Unit) {
+                      private val onObjectsFoundDrown:  (Bitmap) -> Unit) {
 
     var imageProcessor: ImageProcessor? = ImageProcessorImpl()
     var onImageProcessed: ((bitmap: Bitmap) -> Unit)? = null
@@ -30,12 +30,12 @@ class ObjectRecognizer<T>(private val imageProvider: ImageProvider,
     }
 
     private fun onImageCaptured(bitmap: Bitmap) {
-        imageProcessor?.processImage(bitmap, ::onImageProcessed) ?: classifier.getScore(bitmap, onScoreChange, onDrawRequest)
+        imageProcessor?.processImage(bitmap, ::onImageProcessed) ?: classifier.getScore(bitmap, onScoreChange, onObjectsFoundDrown)
     }
 
     private fun onImageProcessed(bitmap: Bitmap) {
         onImageProcessed?.invoke(bitmap)
-        classifier.getScore(bitmap, onScoreChange, onDrawRequest)
+        classifier.getScore(bitmap, onScoreChange, onObjectsFoundDrown)
     }
 
     fun stopWatchScoreChange() {
