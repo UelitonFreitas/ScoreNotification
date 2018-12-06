@@ -3,16 +3,18 @@ package com.notification.score.scorenotification.classifiers
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.util.Log
+import com.google.android.gms.vision.face.Face
 import com.google.firebase.ml.vision.FirebaseVision
 import com.google.firebase.ml.vision.common.FirebaseVisionImage
+import com.google.firebase.ml.vision.face.FirebaseVisionFace
 import com.google.firebase.ml.vision.face.FirebaseVisionFaceDetectorOptions
 
 
-class ScoreClassifierImpl : ScoreClassifier {
-    var imageSequence = 0L
+class FaceDetectImpl : ImageClassifier<List<FirebaseVisionFace>> {
 
-    override fun getScore(image: Bitmap, onScoreFound: (String) -> Unit, onDrawRequest: ((Bitmap)->Unit)?) {
+    val tag = "FaceDetectImpl"
 
+    override fun getScore(image: Bitmap, onDetect: (List<FirebaseVisionFace>) -> Unit, onDrawRequest: ((Bitmap)->Unit)?) {
 
         // High-accuracy landmark detection and face classification
         val options = FirebaseVisionFaceDetectorOptions.Builder()
@@ -23,17 +25,16 @@ class ScoreClassifierImpl : ScoreClassifier {
         val fireBaseImage = FirebaseVisionImage.fromBitmap(image)
         val detector = FirebaseVision.getInstance().getVisionFaceDetector(options)
 
-        Log.d("@@@@@@", "getScore")
-
         val result = detector.detectInImage(fireBaseImage).addOnSuccessListener { faces ->
-            Log.d("@@@@@@", "Success found: ${faces.size} faces")
+            Log.d(tag, "Success found: ${faces.size} faces")
             for (face in faces) {
                 FaceGraphic(face).draw(canvas)
-                Log.d("@@@@@@", "Draw image found")
+                Log.d(tag, "Draw image found")
                 onDrawRequest?.invoke(image)
+                onDetect(faces)
             }
         }.addOnFailureListener {
-            Log.d("@@@@@@", "Faiooooooo")
+            Log.d(tag, "Faiooooooo")
         }
     }
 }

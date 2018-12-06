@@ -1,15 +1,15 @@
 package com.notification.score.scorenotification
 
 import android.graphics.Bitmap
-import com.notification.score.scorenotification.classifiers.ScoreClassifier
+import com.notification.score.scorenotification.classifiers.ImageClassifier
 import com.notification.score.scorenotification.imageprocessor.ImageProcessor
 import com.notification.score.scorenotification.imageprocessor.ImageProcessorImpl
 import com.notification.score.scorenotification.imageprovider.ImageProvider
 import kotlinx.coroutines.*
 
-class ScoreRecognizer(private val imageProvider: ImageProvider,
-                      private val classifier: ScoreClassifier,
-                      private val onScoreChange: (String) -> Unit,
+class ObjectRecognizer<T>(private val imageProvider: ImageProvider,
+                      private val classifier: ImageClassifier<T>,
+                      private val onScoreChange: (T) -> Unit,
                       private val onDrawRequest:  (Bitmap) -> Unit) {
 
     var imageProcessor: ImageProcessor? = ImageProcessorImpl()

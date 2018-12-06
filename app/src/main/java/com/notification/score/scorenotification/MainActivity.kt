@@ -3,15 +3,15 @@ package com.notification.score.scorenotification
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import com.globo.video.player.Player
 import com.globo.video.player.PlayerOption
 import com.globo.video.player.base.PlayerMimeType
-import com.notification.score.scorenotification.classifiers.ScoreClassifier
-import com.notification.score.scorenotification.classifiers.ScoreClassifierImpl
+import com.google.firebase.ml.vision.face.FirebaseVisionFace
+import com.notification.score.scorenotification.classifiers.FaceDetectImpl
+import com.notification.score.scorenotification.classifiers.ImageClassifier
 import com.notification.score.scorenotification.imageprovider.ImageProvider
 import com.notification.score.scorenotification.imageprovider.ImageProviderImpl
 import io.clappr.player.base.ClapprOption
@@ -19,14 +19,14 @@ import io.clappr.player.base.Options
 
 
 class MainActivity() : AppCompatActivity() {
-    private lateinit var globoPlayer : Player
+    private lateinit var globoPlayer: Player
     private lateinit var imageView: ImageView
     private lateinit var playerContainer: ViewGroup
     private val scores: TextView by lazy { findViewById<TextView>(R.id.text_view_score) }
     lateinit var imageProvider: ImageProvider
-    lateinit var scoreClassifier: ScoreClassifier
 
-    lateinit var scoreRecognizer: ScoreRecognizer
+    lateinit var imageClassifier: ImageClassifier<List<FirebaseVisionFace>>
+    lateinit var scoreRecognizer: ObjectRecognizer<List<FirebaseVisionFace>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         io.clappr.player.Player.initialize(applicationContext)
@@ -54,9 +54,8 @@ class MainActivity() : AppCompatActivity() {
         super.onResume()
 
         imageProvider = ImageProviderImpl(globoPlayer)
-        scoreClassifier = ScoreClassifierImpl()
-        scoreRecognizer = ScoreRecognizer(imageProvider, scoreClassifier, ::onScoreFound, ::onDrawRequest).apply {
-//            onImageProcessed = ::onImageProcessed
+        imageClassifier = FaceDetectImpl()
+        scoreRecognizer = ObjectRecognizer(imageProvider, imageClassifier, ::onFacesFound, ::onDrawRequest).apply {
             startWatchScoreChange()
         }
     }
@@ -72,12 +71,11 @@ class MainActivity() : AppCompatActivity() {
 
     }
 
-    private fun onScoreFound(score: String) {
-        runOnUiThread { scores.text = score }
+    private fun onFacesFound(faces: List<FirebaseVisionFace>) {
+        scores.text = "${faces.size} faces found!"
     }
 
-    private fun onDrawRequest(bitmap: Bitmap){
-        Log.d("@@@@@", "draw found position")
+    private fun onDrawRequest(bitmap: Bitmap) {
         onImageProcessed(bitmap)
     }
 }
